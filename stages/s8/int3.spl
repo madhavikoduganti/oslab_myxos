@@ -1,0 +1,95 @@
+alias callno S1;
+alias return_add S2;
+alias arg1 S0;
+alias arg2 S3;
+alias currentPCB S4;
+alias file_table_index S5;
+alias fat_index S6;
+alias file_size S7;
+alias i S8;
+alias j S9;
+alias block_num S10;
+alias lseek S11;
+alias basic_block S12;
+callno = [([PTBR + 2 * ((SP -1)/ 512)] * 512) + ((SP -1)% 512)];// Get system call no. from the stack and put it in a register
+return_add = ([PTBR + 2 * ((SP -2)/ 512)] * 512) + ((SP -2)% 512); //getting return address for  returning the value by the  system call
+arg2 = [([PTBR + 2 * ((SP -3)/ 512)] * 512) + ((SP -3)% 512)];// Getting arguments from stack and put it in registers.. this is LSEEK position
+arg1 = [([PTBR + 2 * ((SP -4)/ 512)] * 512) + ((SP -4)% 512)];// Getting arguments from stack and put it in registers.. this is file descriptor
+//------------------SEEK system call-----------------
+if(callno == 6) then 					//call number is 6 for seek sytem call.. if callnumber is 6,
+	if((arg1 < 0) || (arg1 > 7)) then			//if file descriptor is invalid..
+		[return_add] = -1;			//returning with failure
+		ireturn;
+	else						//if file descriptor is valid
+		
+		currentPCB = READY_LIST + 32 *((PTBR - 1024) / 8);//pcb value
+		file_table_index = [currentPCB + 15 + arg1*2 + 0];//index to  system wide file table entry in pcb now
+		if(file_table_index == -1) then
+			[return_add] = -1;
+			ireturn;
+		endif;
+		if([FILE_TABLE + 2*file_table_index + 0] == -1) then //system wide open file table entry  if is -1
+			[return_add] = -1;		//returning with failure
+			ireturn;
+		else					//if not -1
+			fat_index = [FILE_TABLE + 2*file_table_index + 0];//index to the fat entry of the file
+			file_size = [FAT + fat_index*8 + 1]; //getting basic block wid fat_index
+			if((arg2 <= file_size) && (0 <= arg2) ) then
+				[currentPCB + 15 + arg1*2 + 1] = arg2;
+				[return_add] = 0;
+				ireturn;
+			else
+				[return_add] = -1;
+				ireturn;
+			endif;
+		endif;
+	endif;
+endif;
+
+//---------------done with SEEK system call----------------
+
+
+//----------READ system call-------------------
+if(callno == 7) then 	
+arg2 = ([PTBR + 2 * ((SP -3)/ 512)] * 512) + ((SP -3)% 512);// Getting arguments from stack and put it in registers.. this is LSEEK position				
+							//call number is 7 for read sytem call.. if callnumber is 7,
+	if((arg1 < 0) || (arg1 > 7)) then			//if file descriptor is invalid..
+		[return_add] = -1;			//returning with failure
+		ireturn;
+	else
+		currentPCB = READY_LIST + 32 *((PTBR - 1024) / 8);//pcb value
+		file_table_index = [currentPCB + 15 + arg1*2 + 0];//index to  system wide file table entry in pcb now
+		if(file_table_index == -1) then
+			[return_add] = -1;
+			ireturn;
+		endif;
+		lseek = [currentPCB + 15 + arg1*2 + 1];	//getting lseek value
+		if([FILE_TABLE + 2*file_table_index + 0] == -1) then //system wide open file table entry  if is -1
+			[return_add] = -1;		//returning with failure
+			ireturn;
+		else					//if not -1
+			fat_index = [FILE_TABLE + 2*file_table_index + 0];//index to the fat entry of the file
+			basic_block = [FAT + fat_index*8 + 2]; //getting basic block wid fat_index
+			file_size =  [FAT + fat_index*8 + 1];
+			load(1, basic_block); 		//loading basic block to scratchpad
+			if(lseek >= (file_size-1)) then
+				[return_add] = -1;
+				ireturn;			
+			endif;
+			i = lseek/512;			//getting blockindex in basic block using lseek position 
+			j = lseek%512;			//getting address of the word 
+							//to where content is to be written in the block
+			
+			block_num = [SCRATCHPAD + i];
+			store(1, basic_block);
+			load(1, block_num);
+			[arg2]  = [SCRATCHPAD + j];		//
+			[currentPCB + 15 + arg1*2 + 1] = [currentPCB + 15 + arg1*2 + 1] + 1;	//incrementing lseek by 1
+			[return_add] = 0;
+			ireturn;
+			
+		endif;
+	endif;
+endif;
+//---------------done wid REad system call------------
+ireturn;

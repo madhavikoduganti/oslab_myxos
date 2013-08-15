@@ -1,0 +1,25 @@
+ 
+
+
+
+
+load --init $s8/init.xsm
+load --os $s8/os_startup.xsm
+load --int=1 $s8/int1.xsm
+load --int=2 $s8/int2.xsm
+load --int=3 $s8/int3.xsm
+load --int=4 $s8/int4.xsm
+load --int=7 $s8/int7.xsm
+load --int=timer $s8/timer.xsm
+load --exhandler $s8/exhandler.xsm
+
+
+
+
+
+
+
+
+$xsm/xsm --timer=0
+
+

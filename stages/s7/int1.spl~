@@ -1,0 +1,77 @@
+alias physicalSP S0;
+alias callno S1;
+alias return_value S2;
+alias arg1 S3;
+alias loopcount S4;
+alias lc S5;
+alias lc1 S6;
+alias i S7;
+
+physicalSP = ([PTBR + 2 * (SP / 512)] * 512) + (SP % 512);
+S1 = [([PTBR + 2 * ((SP -1)/ 512)] * 512) + ((SP -1)% 512)];
+S2 = ([PTBR + 2 * ((SP -2)/ 512)] * 512) + ((SP -2)% 512);
+S3 = [([PTBR + 2 * ((SP -3)/ 512)] * 512) + ((SP -3)% 512)];
+loopcount = 1;
+print [S2];
+print S3;
+// Get system call no. from the stack and put it in a register
+// Get arguments from stack and put it in registers
+
+
+if ( callno == 1) then
+	// Implementation of Create 
+	while(loopcount <= 447) do
+		if([6*512 + loopcount] == 0) then
+			break;
+		endif;
+		loopcount = loopcount + 1;
+	endwhile;
+	if(loopcount >= 448) then
+		[S2] = -1;
+		ireturn;
+		else	
+		if(loopcount < 448) then
+			print "block found";
+			print loopcount;
+			//checking FAT
+			lc1 = 0 ;
+			lc = 5*512+ lc1;
+			while( lc1 < 64)	do
+				if([5*512 + lc1*8] == arg1 ) then
+					[S2] = 0;
+					ireturn;
+				endif;
+				lc1 = lc1 + 1;
+			endwhile;
+			lc1 = 0 ;
+			while( lc1 < 64)	do
+				if([5*512 + lc1*8 + 2] == -1 ) then
+					lc = 5*512 + lc1*8 ;
+					break;
+				endif;
+				lc1 = lc1 + 1;
+			endwhile;	
+			if(lc1 >= 64) then
+				[S2] = -1;
+				ireturn;
+			else
+				//writecode here
+				[lc] = arg1;
+				[lc+1] = 0;
+				[lc+2] = loopcount;
+				load(1, loopcount);
+				i=0;
+				while(i<512) do
+					[512+i] = -1;
+					i = i+1;
+				endwhile;			
+				store(1, loopcount);
+				[6*512 + loopcount] = 1;
+				store(5, 19);
+				store(6, 20);
+			endif;
+		endif;	
+	endif;
+endif;
+
+ireturn;

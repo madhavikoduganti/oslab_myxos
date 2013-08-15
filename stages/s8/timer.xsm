@@ -1,0 +1,5 @@
+START
+MOV T0,  "in timer"
+OUT T0
+IRET
+HALT

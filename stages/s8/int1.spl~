@@ -1,0 +1,165 @@
+alias callno S1;
+alias return_add S2;
+alias arg1 S3;
+alias loopcount S4;
+alias lc S5;
+alias lc1 S6;
+alias i S7;
+
+callno = [([PTBR + 2 * ((SP -1)/ 512)] * 512) + ((SP -1)% 512)];
+							// Get system call no. from the stack and put it in a register
+return_add = ([PTBR + 2 * ((SP -2)/ 512)] * 512) + ((SP -2)% 512); 
+							//getting return address for  returning the value by the  system call
+arg1 = [([PTBR + 2 * ((SP -3)/ 512)] * 512) + ((SP -3)% 512)];
+							// Getting arguments from stack and put it in registers
+
+//---------------system call for create----------------
+if ( callno == 1) then
+							// Implementation of Create 
+	loopcount = 1;
+							//finding for a free block in disk free list using loopcount
+							// if found, the free block number is given by loopcount
+	while(loopcount <= 447) do
+		if([DISK_LIST + loopcount] == 0) then
+			break;
+		endif;
+		loopcount = loopcount + 1;
+	endwhile;
+	if(loopcount >= 448) then 			//if a free block is not found, returning wid -1
+							//max of free block number is 447.. rest is reserved for swap area..
+		[return_add] = -1; 			//returning with -1 if free block not found
+		store(5, 19);
+		store(6, 20);
+		ireturn;
+	else						//if a free block is found
+		if(loopcount < 448) then
+							//checking FAT
+			lc1 = 0 ;
+			lc = FAT+ lc1;
+			while( lc1 < 64)	do 		//checking if already a file is der wid given ilename
+				if([FAT + lc1*8] == arg1 ) then
+					[return_add] = 0; //if der, returning wid 0
+					store(5, 19);
+					store(6, 20);
+					ireturn;
+				endif;
+				lc1 = lc1 + 1;
+			endwhile; 
+			lc1 = 0 ;			//else if not there
+			while( lc1 < 64)	do		//checking for a free fat entry for teh new file reation
+				if([FAT + lc1*8 + 2] == -1 ) then
+					lc = FAT + lc1*8 ;
+					break;
+				endif;
+					lc1 = lc1 + 1;
+			endwhile;	
+			if(lc1 >= 64) then 		//if there is no free entry in fat
+				[return_add] = -1; 	//returning wid -1
+				store(5, 19);
+				store(6, 20);
+					ireturn;
+			else				//if there is a free entry in fat
+							//writecode here
+				[lc] = arg1; 		//writing file name
+				[lc+1] = 0; 		//setting file size
+				[lc+2] = loopcount; 	//setting basic block number
+				load(1, loopcount); 	// loading basic block to scratchpad
+				i=0;
+				while(i<512) do
+					[512+i] = -1; 	//setting all the contents of basic 
+							//block to -1.. 512 is the scratch pad's 
+							//base address..
+					i = i+1;
+				endwhile;			
+				store(1, loopcount); 	//storing back the basic block
+				[DISK_LIST + loopcount] = 1;//setting basic block to used in flist
+				store(5, 19); 		//storing back fat to disk
+				store(6, 20); 		//storing back dflist to disk
+				[return_add] = 0; 	//giving return value 0
+				ireturn;
+			endif;
+		endif;	
+	endif;
+endif;
+//breakpoint;
+//--------done with create system call----------------
+
+
+
+//-------------system call for delete------------
+if(callno == 4) then
+	alias fat_entry S5;
+	alias j S6;
+	alias i S7;
+	alias block_num S8;
+	alias basic_block S9;
+	i=0;
+	while(([FAT + i*8 + 0] != arg1) && (i<64))  do 	//seeing if a file exists in fat with filename
+		i = i+1;
+	endwhile;
+	if(i >= 64) then 				//if no file found, returning wid -1
+		[return_add] = -1;
+		breakpoint;
+		ireturn;
+	else						//if file is found
+		fat_entry = i; 				//getting the fat entry of the file
+		i=0;
+		
+		while(([FILE_TABLE + i*2 + 0] != fat_entry) && (i<64))  do 
+							//checking systemwide open file table if the file is already opened.. 
+							//if opened, returning wid -1..
+			i = i+1;
+		endwhile;
+		
+		if(i < 64) then 				//means file is open
+			[return_add] = -1; 		//hence returning wid failure
+			breakpoint;
+			ireturn;		
+		else					//if file is not open
+							//writing the code
+			basic_block = [FAT + fat_entry*8 + 2]; //getting basic block of file
+			load(1, basic_block);		//loading basic block to scratchpad
+			i=0;
+			while(i<512) do
+				block_num = [SCRATCHPAD + i];
+				if(block_num != -1) then //if a datablock is found in basic block
+					store(1, basic_block);
+					load(1, block_num); //loading that data block
+					j=0;
+					while(j<512) do
+						[SCRATCHPAD + j] = "";//invalidating every entry
+						j=j+1;
+					endwhile;
+					[DISK_LIST + block_num] = 0; //invalidating datablock's entry in the disk free list
+					store(1, block_num);	//storing back that datablock
+					load(1, basic_block);	//loading again the basic block
+				endif;
+			
+				i = i + 1;
+			endwhile;
+//			print "exited while1";
+			[FAT + fat_entry*8 + 0] = -1;		//setting file name to null
+			[FAT + fat_entry*8 + 1] = 0;		//invalidating basic block size in FAT
+			[FAT + fat_entry*8 + 2] = -1;		//invalidating basic block entry in FAT
+			i=0;
+			load(1, basic_block);
+			while(i<512) do
+				[SCRATCHPAD + i] = "";
+				i = i+1;
+			endwhile;
+//			print "exited while2";
+			store(1, basic_block);
+			[DISK_LIST + basic_block] = 0; 		//invalidating  basic block entry in the disk free list
+			store(5, 19);				//storing back FAT from memory to disk
+			store(6, 20);				//storing back disk free list from memory to disk
+			[return_add] = 0;			//giving return value as 0 
+			breakpoint;
+			ireturn;
+		endif;
+	endif;
+endif;
+breakpoint;
+//-----done wid system call for delete----------------
+
+
+ireturn;	//returning to user mode

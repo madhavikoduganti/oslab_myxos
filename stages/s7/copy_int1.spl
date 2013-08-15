@@ -1,0 +1,78 @@
+alias physicalSP S0;
+alias callno S1;
+alias return_value S2;
+alias arg1 S3;
+alias loopcount S4;
+alias lc S5;
+alias lc1 S6;
+alias i S7;
+
+physicalSP = ([PTBR + 2 * (SP / 512)] * 512) + (SP % 512);
+S1 = [([PTBR + 2 * ((SP -1)/ 512)] * 512) + ((SP -1)% 512)];
+S2 = ([PTBR + 2 * ((SP -2)/ 512)] * 512) + ((SP -2)% 512);
+S3 = [([PTBR + 2 * ((SP -3)/ 512)] * 512) + ((SP -3)% 512)];
+loopcount = 1;
+print [S2];
+print S3;
+// Get system call no. from the stack and put it in a register
+// Get arguments from stack and put it in registers
+
+
+if ( callno == 1) then  //to see it system call is 1
+	// Implementation of Create 
+	while(loopcount <= 447) do //seeing if there is any disk block free
+		if([6*512 + loopcount] == 0) then //if free, then loopcount is the block number that is free
+			break;
+		endif;
+		loopcount = loopcount + 1;
+	endwhile;
+	if(loopcount >= 448) then//from 448, its swap area, and it is reserved
+		[S2] = -1; //when not found, returned with -1 value
+		ireturn;
+		else	
+		if(loopcount < 448) then //if block is avilable in 24-447 blocks
+			print "block found";
+			print loopcount;
+			//checking FAT if there is a space to include a file entry
+			//fat holds a max of 64 entries, each wid 8words memory.. see fat table
+			lc1 = 0 ;
+			lc = 5*512+ lc1;
+			while( lc1 < 64)	do
+				if([5*512 + lc1*8] == arg1 ) then //checking if a file already exists with given name of the file that is to be created
+					[S2] = 0;
+					ireturn;
+				endif;
+				lc1 = lc1 + 1;
+			endwhile;
+			lc1 = 0 ;
+			while( lc1 < 64)	do
+				if([5*512 + lc1*8 + 2] == -1 ) then //checking if there is a space for creating a new entry... if there, the basic block number of that entry would be holding -1... and 5*512 is the start address of fat and each entry is of 8 words
+					lc = 5*512 + lc1*8 ;
+					break;
+				endif;
+				lc1 = lc1 + 1;
+			endwhile;	
+			if(lc1 >= 64) then //if no free entry is found, returning with -1
+				[S2] = -1;
+				ireturn;
+			else
+				//writecode here, if free entry is found
+				[lc] = arg1; //setting the file name
+				[lc+1] = 0; //setting the basic block size.. 0 initially
+				[lc+2] = loopcount; //setting block number for the file which is found earlier as loopcount
+				load(1, loopcount); //loading the available block for the file into scratch pad and making every word eqaul to -1.. to be done for a new file
+				i=0;
+				while(i<512) do
+					[512+i] = -1;
+					i = i+1;
+				endwhile;			
+				store(1, loopcount); //storing the block back to the disk
+				[6*512 + loopcount] = 1; //giving 1 for the used block(for file) in the disk free list... 6*512 is the base address of disk free list in memory
+				store(5, 19); //storing back fat to disk
+				store(6, 20); //storing back disk free list to disk
+			endif;
+		endif;	
+	endif;
+endif;
+
+ireturn;

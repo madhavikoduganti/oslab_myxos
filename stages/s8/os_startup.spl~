@@ -1,0 +1,107 @@
+load (7, 1);//loading exception handlers
+load (8, 2);//loading exception handlers
+load (23, 17);//loading int 7 routine
+load (24, 18);//loading int 7 routine
+// Load Interrupt 1 Routine from disk to memory 
+load (11, 5);
+load (12, 6);
+
+// Load Interrupt 2 Routine to memory from disk
+load (13, 7);
+load (14, 8);
+
+// Load Interrupt 4 Routine to memory from disk
+load (17, 11);
+load (18, 12);
+
+// Load Interrupt 7 Routine to memory from disk
+load (23, 17);
+load (24, 18);
+
+
+//load timer interrupt to memory from disk 
+load(9,3);
+load(10,4);
+
+//loading fat and disk free list to memory from disk
+load(5,19);
+load(6,20);
+
+//---------setting up systemwide open file table entries..-----
+//-------------no files are open at the startup----------
+alias counter S0;			
+counter = 0;
+while ( counter <  128) do			// 64 entries, each of size 2 words
+	[ FILE_TABLE + counter + 0] = -1;	// Set FAT Index to -1
+	[ FILE_TABLE + counter + 1] =  0;	// Set File Open Count to 0
+	counter = counter + 2;			// Move to next entry
+endwhile;
+//-----------file table set up-----------------------
+
+
+//----------init process----------------------
+[READY_LIST + 0] = 0;
+load(25,21);	 // Load 1st page of code from disk to memory
+load(26,22);	 // Load 2nd page of code from disk to memory
+load(27,23);	 // Load 3rd page of code from disk to memory
+PTBR = 1024;
+PTLR = 4;
+[PTBR + 0] = 25; // Physical Page Number for Logical Page 0
+[PTBR + 1] = "01"; // Auxiliary Information for Logical Page 0
+[PTBR + 2] = 26; // Physical Page Number for Logical Page 1
+[PTBR + 3] = "01"; // Auxiliary Information for Logical Page 1
+[PTBR + 4] = 27; // Physical Page Number for Logical Page 2
+[PTBR + 5] = "01"; // Auxiliary Information for Logical Page 2
+[PTBR + 6] = 28; // Physical Page Number for Logical Page 3 (Stack) 
+[PTBR + 7] = "01"; // Auxiliary Information for Logical Page 3 (Stack)
+
+[READY_LIST + 1] = 2; // Sets the entry for STATE as Running
+[READY_LIST + 15] = -1;//setting of perprocess open file table of init process as invalid
+[READY_LIST + 16] = -1;//at the start of load of init process.. 
+[READY_LIST + 17] = -1;//system wide open file table index, LSEEK entries are set to -1
+[READY_LIST + 18] = -1;
+[READY_LIST + 19] = -1;
+[READY_LIST + 20] = -1;
+[READY_LIST + 21] = -1;
+[READY_LIST + 22] = -1;
+[READY_LIST + 23] = -1;
+[READY_LIST + 24] = -1;
+[READY_LIST + 25] = -1;
+[READY_LIST + 26] = -1;
+[READY_LIST + 27] = -1;
+[READY_LIST + 28] = -1;
+[READY_LIST + 29] = -1;
+[READY_LIST + 30] = -1;
+
+
+SP = 3 * 512;
+[28 * 512] = 0; // Set up the IP value for INIT in the stack
+//----------------- end init process---------------
+
+
+
+//-----------------process 1--------------------
+[READY_LIST + 32] = 1; // Sets the entry for PID as 1
+load(29,25 );
+alias PTBR_Process1 S0;
+PTBR_Process1 = 1024 + 1 * 8;
+[PTBR_Process1 + 0] = 29; // Physical Page Number for Logical Page 0
+[PTBR_Process1 + 1] = "01"; // Auxiliary Information for Logical Page 0
+[PTBR_Process1 + 2] = 30; // Physical Page Number for Logical Page 1
+[PTBR_Process1 + 3] = "00"; // Auxiliary Information for Logical Page 1
+[PTBR_Process1 + 4] = 31; // Physical Page Number for Logical Page 2
+[PTBR_Process1 + 5] = "00"; // Auxiliary Information for Logical Page 2
+[PTBR_Process1 + 6] = 32; // Physical Page Number for Logical Page 3 (Stack) 
+[PTBR_Process1 + 7] = "01"; // Auxiliary Information for Logical Page 3 (Stack)
+[READY_LIST + 33] = 1;	 // STATE is READY
+[READY_LIST + 34] = 3 * 512; // Sets the entry for BP in the PCB
+[READY_LIST + 35] = 3 * 512;	// Sets the entry for SP in the PCB
+[READY_LIST + 36] = 0;	 // Sets the entry for IP to logical address 0 in the PCB
+[READY_LIST + 37] = PTBR_Process1;	// PTBR 
+[READY_LIST + 38] = 4;	 // PTLR
+//------------process1 end----------------------
+
+
+
+
+ireturn;

@@ -1,0 +1,5 @@
+START
+MOV T0,  "hi maddy"
+OUT T0
+HALT
+HALT

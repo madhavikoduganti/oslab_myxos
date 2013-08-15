@@ -1,0 +1,22 @@
+madhu@ubuntu:~/myxos/s6$ cd $xfs
+madhu@ubuntu:~/myxos/xfs-interface$ ./xfs-interface 
+Unix-XFS Interace Version 1.0. 
+Type "help" for  getting a list of commands.
+# copy 19 19 $s6/show.txt
+
+# exit
+madhu@ubuntu:~/myxos/xfs-interface$ $spl/spl --os $xos/s6/os_startup.spl
+madhu@ubuntu:~/myxos/xfs-interface$ cd $xfs
+madhu@ubuntu:~/myxos/xfs-interface$ ./xfs-interface 
+Unix-XFS Interace Version 1.0. 
+Type "help" for  getting a list of commands.
+# load --os $xos/s6/os_startup.xsm
+
+# load --int=1 $xos/s6/int1.xsm              
+
+# load --int=7 $xos/s6/int7.xsm      
+
+# load --exhandler $xos/s6/exhandler.xsm 
+
+# exit
+

@@ -1,0 +1,85 @@
+alias sysCallNo S1;
+sysCallNo=[([PTBR + 2 * ((SP - 1)/ 512)] * 512) + ((SP -1)% 512)];
+
+alias returnvalue S2;
+returnvalue=([PTBR + 2 * ((SP - 2) / 512)] * 512) + ((SP - 2) % 512);
+
+alias argument S3;
+argument=[([PTBR + 2 * ((SP - 3) / 512)] * 512) + ((SP - 3) % 512)];
+
+// Get system call no. from the stack and put it in a register
+// Get arguments from stack and put it in registers
+
+if ( sysCallNo == 1) then
+      alias count S4;
+      count=DISK_LIST;
+alias basicblock S5;
+	// Implementation of Create 
+    
+      while (count<3520) do
+    
+           if([count]!=0) then        // checking the diskfree list
+              count=count+1;
+           else 
+               basicblock=count-DISK_LIST;
+               break;
+            endif;
+     
+      endwhile;
+      breakpoint;
+       if (count==3520) then
+           [returnvalue]=-1;
+           ireturn;
+       
+      else 
+       
+		alias counter S0;
+		counter=FAT;
+		breakpoint;
+		while (counter<DISK_LIST) do
+		      
+			 if([counter]==argument) then
+			      [returnvalue]=0;
+			      [returnvalue]=[physicalSP-2];
+			      ireturn;
+			  else counter=counter+8;
+			  endif;
+		       
+	       endwhile;
+	       breakpoint;
+
+	       counter=FAT;
+	       
+	       while (counter<DISK_LIST) do
+	       
+			  if([counter+2]==-1) then
+				     [counter]=argument;
+				     [counter+1]=0;
+				     [counter+2]=basicblock;
+				     load(1,basicblock);
+				     alias num S1;
+				     num=0;
+				     while(num!=512) do
+					      [SCRATCHPAD+num]=-1;
+					      num=num+1;
+				     endwhile;
+				     store(1,basicblock);
+				     [DISK_LIST+basicblock]=1;
+				     store(5,19);
+				     store(6,20);
+				     [returnvalue]=0;
+				     ireturn;
+			  else
+				      counter=counter+8;
+			  endif;
+		  
+		endwhile;
+		  
+		 if(counter>=DISK_LIST) then
+		       [returnvalue]=-1;
+		       ireturn;
+		  endif;
+		       
+       endif;
+       
+endif;

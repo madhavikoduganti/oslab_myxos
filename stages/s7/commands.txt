@@ -1,0 +1,14 @@
+$spl/spl --os $s7/os_startup.spl
+$spl/spl --int=1 $s7/int1.spl
+$spl/spl --int=7 $s7/int7.spl
+$spl/spl --exhandler $s7/exhandler.spl
+$apl/apl $s7/init.apl
+
+
+load --init $s7/odd.xsm
+load --os $s7/os_startup.xsm
+load --int=1 $s7/int1.xsm
+load --int=7 $s7/int7.xsm
+load --exhandler $s7/exhandler.xsm
+
+

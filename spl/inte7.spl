@@ -1,0 +1,2 @@
+print "int interrupt 7 routine";
+halt;

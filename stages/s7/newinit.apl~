@@ -1,0 +1,7 @@
+
+integer main(){
+	Create("first");
+	Create("first");
+	Create("first");		
+	return 0;
+}

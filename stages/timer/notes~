@@ -1,0 +1,15 @@
+madhu@ubuntu:~/myxos/xfs-interface$ ./xfs-interface 
+Unix-XFS Interace Version 1.0. 
+Type "help" for  getting a list of commands.
+# load --os $xos/timer/os_startup.xsm
+
+# load --init $xos/timer/printnum.xsm    
+
+# load --int=timer $xos/timer/timer.xsm
+
+# load --int=7 $xos/timer/int7.xsm
+
+# load --int=1 $xos/timer/int1.xsm
+
+# load --exhandler $xos/timer/exhandler.xsm
+
