@@ -134,7 +134,6 @@ if(callno == 4) then
 					store(1, block_num);	//storing back that datablock
 					load(1, basic_block);	//loading again the basic block
 				endif;
-			
 				i = i + 1;
 			endwhile;
 			[FAT + fat_entry*8 + 0] = -1;		//setting file name to null
@@ -158,6 +157,4 @@ if(callno == 4) then
 endif;
 breakpoint;
 //-----done wid system call for delete----------------
-
-
 ireturn;	//returning to user mode

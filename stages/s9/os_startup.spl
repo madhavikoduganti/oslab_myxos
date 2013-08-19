@@ -1,8 +1,8 @@
-load (7, 1);//loading exception handlers
-load (8, 2);//loading exception handlers
-load (23, 17);//loading int 7 routine
-load (24, 18);//loading int 7 routine
-// Load Interrupt 1 Routine from disk to memory 
+// Load Exception Handlers to memory from disk
+load (7, 1);
+load (8, 2);
+
+// Load Interrupt 1 Routine to memory from disk
 load (11, 5);
 load (12, 6);
 
@@ -18,6 +18,14 @@ load (16, 10);
 load (17, 11);
 load (18, 12);
 
+// Load Interrupt 5 Routine to memory from disk
+load (19, 13);
+load (20, 14);
+
+// Load Interrupt 6 Routine to memory from disk
+load (21, 15);
+load (22, 16);
+
 // Load Interrupt 7 Routine to memory from disk
 load (23, 17);
 load (24, 18);
@@ -31,6 +39,9 @@ load(10,4);
 load(5,19);
 load(6,20);
 
+
+
+
 //---------setting up systemwide open file table entries..-----
 //-------------no files are open at the startup----------
 alias counter S0;			
@@ -41,6 +52,22 @@ while ( counter <  128) do			// 64 entries, each of size 2 words
 	counter = counter + 2;			// Move to next entry
 endwhile;
 //-----------file table set up-----------------------
+
+
+
+
+//---------------------------initialising states of all processes to zero in pcb-------------------
+counter = 0;
+while(counter < 32) do
+	[READY_LIST + counter*32 + 1] = 0;
+	counter = counter + 1;
+endwhile;
+//--------------------done with initialising states of all processes to zero in pcb-------------------
+
+
+
+
+
 
 
 //----------init process----------------------
@@ -58,7 +85,6 @@ PTLR = 4;
 [PTBR + 5] = "01"; // Auxiliary Information for Logical Page 2
 [PTBR + 6] = 28; // Physical Page Number for Logical Page 3 (Stack) 
 [PTBR + 7] = "01"; // Auxiliary Information for Logical Page 3 (Stack)
-
 [READY_LIST + 1] = 2; // Sets the entry for STATE as Running
 [READY_LIST + 15] = -1;//setting of perprocess open file table of init process as invalid
 [READY_LIST + 16] = -1;//at the start of load of init process.. 
@@ -76,34 +102,36 @@ PTLR = 4;
 [READY_LIST + 28] = -1;
 [READY_LIST + 29] = -1;
 [READY_LIST + 30] = -1;
-
-
 SP = 3 * 512;
 [28 * 512] = 0; // Set up the IP value for INIT in the stack
 //----------------- end init process---------------
 
 
 
-//-----------------process 1--------------------
-[READY_LIST + 32] = 1; // Sets the entry for PID as 1
-load(29,25 );
-alias PTBR_Process1 S0;
-PTBR_Process1 = 1024 + 1 * 8;
-[PTBR_Process1 + 0] = 29; // Physical Page Number for Logical Page 0
-[PTBR_Process1 + 1] = "01"; // Auxiliary Information for Logical Page 0
-[PTBR_Process1 + 2] = 30; // Physical Page Number for Logical Page 1
-[PTBR_Process1 + 3] = "00"; // Auxiliary Information for Logical Page 1
-[PTBR_Process1 + 4] = 31; // Physical Page Number for Logical Page 2
-[PTBR_Process1 + 5] = "00"; // Auxiliary Information for Logical Page 2
-[PTBR_Process1 + 6] = 32; // Physical Page Number for Logical Page 3 (Stack) 
-[PTBR_Process1 + 7] = "01"; // Auxiliary Information for Logical Page 3 (Stack)
-[READY_LIST + 33] = 1;	 // STATE is READY
-[READY_LIST + 34] = 3 * 512; // Sets the entry for BP in the PCB
-[READY_LIST + 35] = 3 * 512;	// Sets the entry for SP in the PCB
-[READY_LIST + 36] = 0;	 // Sets the entry for IP to logical address 0 in the PCB
-[READY_LIST + 37] = PTBR_Process1;	// PTBR 
-[READY_LIST + 38] = 4;	 // PTLR
-//------------process1 end----------------------
+
+
+
+
+//--------setting up memory list of RAM-----------------
+counter = 0;
+while(counter<64) do
+	if(counter <= 28) then
+		[MEM_LIST  + counter] = 1;
+	else
+		[MEM_LIST  + counter] = 0;
+	endif;
+	counter = counter + 1;
+endwhile;
+//--------done with setting up memory list-----------------
+
+		
+
+
+
+
+
+
+
 
 
 

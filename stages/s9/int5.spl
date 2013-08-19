@@ -1,0 +1,122 @@
+alias pcb_index S0;
+alias callno S1;
+alias return_add S2;
+alias i S3;
+alias j S4;
+alias k S5;
+alias PCB_mom S6;
+alias PCB_child S7;
+alias PT_child S8;
+alias SP_child S9;
+alias PT_mom S10;
+alias mom_block S11;
+alias child_block S12;
+//print [([PTBR + 2 * ((SP)/ 512)] * 512) + ((SP)% 512)];
+breakpoint;
+callno = [([PTBR + 2 * ((SP-1)/ 512)] * 512) + ((SP-1)% 512)];
+							// Get system call no. from the stack and put it in a register
+return_add = ([PTBR + 2 * ((SP-2)/ 512)] * 512) + ((SP-2)% 512); 
+							//getting return address for  returning the value by the  system call
+//-------------sytem call for FORK---------------------
+if(callno == 8)	then
+	i=0;
+	while((i<32) && ([READY_LIST + 1 + i*32] != 0) ) do					//getting free pcb
+		i = i + 1;
+	endwhile;
+//	print "pcb index";
+//	print i;
+	if(i>=32) then 		
+//		print "failure1"	;						//if no pcb entry is freely available
+		[return_add] = -1;						//returniing with failure
+	else									//if there is free pcb entry for the child process
+		pcb_index = i;							//pcb_index of child
+		PCB_mom = READY_LIST + ((PTBR-1024)/8)*32; 		//pcb start address of mom
+		PCB_child = READY_LIST + pcb_index*32;			//pcb start address of child
+		[PCB_child + 0 ] = pcb_index;					//setting process id for child
+		i=0; j =0;							//some random iterators
+		while(i<4) do							//calculating the number of valid pages for mom process
+			if([PTBR + 1 + i*2] != -1) then				//iterating thru page table of mom process
+				j = j + 1;					// j holds the number of valid memory pages for the 
+										//parent process
+			endif;
+			i = i + 1;
+		endwhile;
+		i = 0; 								//again some random iterators
+		k = 0; 						
+		while(i<64) do							//searching the available memory pages
+			if([MEM_LIST + i] == 0) then
+				k = k+1;
+			endif;		
+			if(j == k) then
+				break;						//means enough pages are available for child process
+			endif;
+			i = i + 1;
+		endwhile;
+		if(k<j) then
+//			print "failure";
+			[return_add] = -1;					//returning with failure if enough memory pages are not 
+										//available
+		else		
+								//if enough pages are available
+//			print "in else";
+			i=0;
+			PT_mom = PTBR;
+			PT_child = PAGE_TABLE + pcb_index*8;
+			breakpoint;
+			while(i<4) do
+				if([PT_mom + i*2 + 0] != -1) then
+					k = 0;
+					while(k<64) do
+						if([MEM_LIST + k] == 0) then
+							[MEM_LIST + k] = 1;
+							[PT_child + i*2 + 0] = k;
+							[PT_child + i*2 + 1] = "01";
+							j=0;
+							mom_block = [PT_mom + i*2 + 0];					
+							child_block = k;					
+							while(j<512) do
+								[child_block*512 + j] = [mom_block*512 + j];
+								j = j + 1;
+							endwhile;
+							break;
+						else
+							k = k + 1;
+						endif;						
+					endwhile;
+				else
+					[PT_child + i*2 + 0] = -1;
+					[PT_child + i*2 + 1] = "00";
+				endif;
+				i = i + 1;
+			endwhile;
+			[PCB_child + 6] = [PCB_mom + 6]; 
+			[PCB_child + 5] = PT_child;
+			[PCB_child + 4] = [([PTBR + 2 * ((SP)/ 512)] * 512) + ((SP)% 512)];
+			[PCB_child + 3] = SP - 1;
+			[PCB_child + 2] = BP;
+			[PCB_child + 7] = R0;
+			[PCB_child + 8] = R1;
+			[PCB_child + 9] = R2;
+			[PCB_child + 10] = R3;
+			[PCB_child + 11] = R4;
+			[PCB_child + 12] = R5;
+			[PCB_child + 13] = R6;
+			[PCB_child + 14] = R7; 
+			i=15;
+			while(i<31) do
+				[PCB_child + i] = [PCB_mom + i];
+				[PCB_child + i + 1] = [PCB_mom + i + 1];
+				if([PCB_mom + i] != -1) then
+					[FILE_TABLE + [PCB_mom + 1]*2  + 1] = [FILE_TABLE + [PCB_mom + 1]*2 + 1] + 1;
+				endif;
+				i = i + 2;
+			endwhile;
+			[PCB_child + 1] = 1;
+			[return_add] = pcb_index;
+			[([PT_child + 2 * ((SP-2)/ 512)] * 512) + ((SP-2)% 512)] = -2; 
+		endif;
+	endif;
+endif;
+breakpoint;
+//----------done wid FORK-------------------------------
+ireturn;

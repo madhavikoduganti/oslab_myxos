@@ -1,3 +1,6 @@
 START
+MOV T0,  "in handler"
+OUT T0
+BRKP
 HALT
 HALT

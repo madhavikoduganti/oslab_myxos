@@ -32,17 +32,17 @@ j=0;
 
 while(1==1) do
 
-		i=0;
-		j=0;
-		while(i<32) do
-			if((([pcb + i*8] != 1) && ([pcb + i*8] != 2)) ||([pcb + i*8] == 0))then
-				j = j+1;
-			endif;
-			i=i+1;
-		endwhile;
-		if(j > 31) then
-		halt;
+	i=0;
+	j=0;
+	while(i<32) do
+		if((([pcb + i*8] != 1) && ([pcb + i*8] != 2)) ||([pcb + i*8] == 0))then
+			j = j+1;
 		endif;
+		i=i+1;
+	endwhile;
+	if(j > 31) then
+	halt;
+	endif;
 
 
 

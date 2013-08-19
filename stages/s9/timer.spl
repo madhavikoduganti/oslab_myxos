@@ -1,4 +1,4 @@
-print "TIMER";
+//print "TIMER";
 alias currentPID S0;
 currentPID = (PTBR - 1024) / 8;
 alias currentPCB S1;
@@ -38,7 +38,7 @@ while(1==1) do
 endwhile;
 alias PCB S5;
 PCB = pcb;
-	
+[PCB + 1] = 2;
 BP = [PCB + 2];
 SP = [PCB + 3];
 PTBR = [PCB + 5];
@@ -59,4 +59,6 @@ SP = SP + 1;
 alias newphysicalSP S2; 
 newphysicalSP = ([PTBR + 2 * (SP / 512)] * 512) + (SP % 512); 
 [ newphysicalSP ] = [ PCB + 4 ]; // Stores IP field value of PCB on the stack 
+//print "exiting timer";
+breakpoint;
 ireturn;
