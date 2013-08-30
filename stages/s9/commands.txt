@@ -1,13 +1,16 @@
-	$spl/spl --os $s9/os_startup.spl
-	$spl/spl --int=1 $s9/int1.spl
-	$spl/spl --int=timer $s9/timer.spl
-	$spl/spl --int=2 $s9/int2.spl
-	$spl/spl --int=3 $s9/int3.spl
-	$spl/spl --int=4 $s9/int4.spl
-	$spl/spl --int=5 $s9/int5.spl
-	$spl/spl --int=7 $s9/int7.spl
-	$spl/spl --exhandler $s9/exhandler.spl
-	$apl/apl $s9/init.apl
+$spl/spl --os $s9/os_startup.spl
+$spl/spl --int=1 $s9/int1.spl
+$spl/spl --int=timer $s9/timer.spl
+$spl/spl --int=2 $s9/int2.spl
+$spl/spl --int=3 $s9/int3.spl
+$spl/spl --int=4 $s9/int4.spl
+$spl/spl --int=6 $s9/int6.spl
+$spl/spl --int=5 $s9/int5.spl
+$spl/spl --int=7 $s9/int7.spl
+$spl/spl --exhandler $s9/exhandler.spl
+$apl/apl $s9/init.apl
+$apl/apl $s9/odd.apl
+$apl/apl $s9/even.apl
 
 
 
@@ -20,12 +23,13 @@ load --int=1 $s9/int1.xsm
 load --int=2 $s9/int2.xsm
 load --int=3 $s9/int3.xsm
 load --int=4 $s9/int4.xsm
+load --int=6 $s9/int6.xsm
 load --int=5 $s9/int5.xsm
 load --int=7 $s9/int7.xsm
 load --int=timer $s9/timer.xsm
 load --exhandler $s9/exhandler.xsm
-
-
+load --exec $s9/odd.xsm
+load --exec $s9/even.xsm
 
 
 

@@ -1,17 +1,15 @@
 integer main()
 {
 	integer pid;
-	print("Before Fork");
+	integer pid1;
+	integer status;
 	pid = Fork();
-	if(pid==-2) then
+	if(pid == -2) then
 		print("in child");
-		print(pid);
-	else
-		print("with mommy");
-		print(pid);
+		pid1 = Fork();
+		
 	endif;
-	
-	print("After Fork");
-	print(pid);
+	pid1 = Fork();
+	print("end of exec.");
 	return 0;
 }

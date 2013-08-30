@@ -1,28 +1,30 @@
-print "7 routine";
+//print "7 routine";
 alias currentPID S0;
 currentPID = (PTBR - 1024) / 8;
 alias currentPCB S1;
 currentPCB = READY_LIST + 32 * currentPID;
 [ currentPCB + 1 ] = 0; // Set STATE to 0
-[ currentPCB + 2 ] = BP;
-[ currentPCB + 3 ] = SP - 1;	
-alias physicalSP S2;
-physicalSP = ([PTBR + 2 * (SP / 512)] * 512) + (SP % 512);
-[ currentPCB + 4 ] = [ physicalSP ]; // Save IP of current process in the PCB from the stack
-[ currentPCB + 5 ] = PTBR;
-[ currentPCB + 6 ] = PTLR;	
-[ currentPCB + 7 ] = R0;	
-[ currentPCB + 8 ] = R1;	
-[ currentPCB + 9 ] = R2;	
-[ currentPCB + 10 ] = R3;	
-[ currentPCB + 11 ] = R4;
-[ currentPCB + 12 ] = R5;	
-[ currentPCB + 13 ] = R6;	
-[ currentPCB + 14 ] = R7;
+alias i S3;
+i=0;
+while(i<8) do
+	if([currentPCB + 15 + i*2 + 0] != -1) then
+		[FILE_TABLE + [currentPCB + 15 + i*2 + 0]*2 + 1] = [FILE_TABLE + [currentPCB + 15 + i*2 + 0]*2 + 1] - 1;
+		if([FILE_TABLE + [currentPCB + 15 + i*2 + 0]*2 + 1] == 0) then
+			[FILE_TABLE + [currentPCB + 15 + i*2 + 0]*2 + 0] = -1;
+		endif;
+	endif;
+	i = i + 1;
+endwhile;
+i=0;
+while(i<4) do
+	[PTBR + i*2 + 0] = -1;
+	[PTBR + i*2 + 1] = "00";
+i = i + 1;
+endwhile;
 alias pid S2;
 alias pcb S4;
 pid = currentPID + 1;
-alias i S7;
+
 alias j S8;
 i=0;
 j=0;
