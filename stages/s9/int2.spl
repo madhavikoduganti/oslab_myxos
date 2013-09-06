@@ -62,7 +62,7 @@ if(callno == 2) then
 				[currentPCB + 15 + pcb_entry*2 + 0] = file_table_entry;
 				[currentPCB + 15 + pcb_entry*2 + 1] = 0;
 				[return_add] = pcb_entry;
-				breakpoint;
+//				breakpoint;
 				ireturn;	
 				
 			else
@@ -79,7 +79,7 @@ if(callno == 2) then
 	endwhile;
 	
 endif;
-breakpoint;
+//breakpoint;
 //------done with open system call-----------
 
 
@@ -99,7 +99,8 @@ if(callno == 3) then
 			endif;
 			
 		endif;
-		[currentPCB + 15 + 2*arg1 + 0] = -1;
+		[currentPCB + 15 + 2*arg1 + 0] = -1;//setting file descriptor to invalid
+		[currentPCB + 15 + 2*arg1 + 1] = -1;//setting lseek to invalid
 		[return_add] = 0;
 	else
 		[return_add] = -1;
@@ -108,7 +109,7 @@ if(callno == 3) then
 
 
 endif;
-breakpoint;
+//breakpoint;
 //-----------done with close system call----------------
 
 

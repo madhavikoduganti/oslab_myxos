@@ -1,25 +1,27 @@
-//print "7 routine";
+				//"7 routine"
 alias currentPID S0;
 currentPID = (PTBR - 1024) / 8;
 alias currentPCB S1;
 currentPCB = READY_LIST + 32 * currentPID;
-[ currentPCB + 1 ] = 0; // Set STATE to 0
+[ currentPCB + 1 ] = 0; 		// Set STATE to 0... means process is dead or ended
 alias i S3;
 i=0;
-while(i<8) do
+while(i<8) do			//clearing off of the file descriptors from pcb for the ended process
 	if([currentPCB + 15 + i*2 + 0] != -1) then
 		[FILE_TABLE + [currentPCB + 15 + i*2 + 0]*2 + 1] = [FILE_TABLE + [currentPCB + 15 + i*2 + 0]*2 + 1] - 1;
 		if([FILE_TABLE + [currentPCB + 15 + i*2 + 0]*2 + 1] == 0) then
 			[FILE_TABLE + [currentPCB + 15 + i*2 + 0]*2 + 0] = -1;
 		endif;
 	endif;
+	[currentPCB + 15 + i*2 + 0] = -1;//clearing off file table index from each file descriptor
+	[currentPCB + 15 + i*2 + 1] = -1;//clearing off lseek value from each file descriptor
 	i = i + 1;
 endwhile;
 i=0;
-while(i<4) do
-	[PTBR + i*2 + 0] = -1;
-	[PTBR + i*2 + 1] = "00";
-i = i + 1;
+while(i<4) do			//clearing off of per process file table of ended process
+	[PTBR + i*2 + 0] = -1;	//setting the page as invalid
+	[PTBR + i*2 + 1] = "00";	//dereferencing the page
+	i = i + 1;
 endwhile;
 alias pid S2;
 alias pcb S4;
@@ -28,30 +30,39 @@ pid = currentPID + 1;
 alias j S8;
 i=0;
 j=0;
-while(1==1) do
+while(1==1) do			//basically this while loop is for checking which process is ready, 
+				//so that we could resume it by.. followint the round robin algorithm
+				//this loop waits till it finds any process in ready state
+				//or it sees all the processes have ended
 	i=0;
 	j=0;
-	while(i<32) do
+	while(i<32) do		//checking the number of ended processes
 		if((([pcb + i*8] != 1) && ([pcb + i*8] != 2)) ||([pcb + i*8] == 0))then
 			j = j+1;
 		endif;
 		i=i+1;
 	endwhile;
-	if(j > 31) then
-	halt;
+	if(j > 31) then		//if all processes have ended
+	halt;			//then halting the machine
 	endif;
-	if(pid > 31) then
-		pid = 0;
+	if(pid > 31) then		//see, previously u've set pid as the pid of 
+				//the next process by incrementing the ended process's pid-ROUND ROBIN WAY
+		pid = 0;	//incase the ended process's pid is 31, go check for 0th pid process-ROUND ROBIN 
 	endif;
 	pcb = READY_LIST + 32 * pid;
-	if([pcb + 1] == 1) then
+				// get the ready list of the next process
+	if([pcb + 1] == 1) then	//if this process is ready, kummei by resuming that process
 		currentPID = pid;
-		break;
+		break;		//pid dorikindehe, malli anni processes 
+				//end ayyayemo check cheyakunda baitiki po
 	else
-		pid = pid + 1;
+		pid = pid + 1;	//incase the process is not ready, go check for the next process
 	endif;	
+
 endwhile;
-if(pid == currentPID+1) then
+
+//control comes here if it finds any process in ready state with pid variable holding the pid of that process
+if(pid == currentPID+1) then 	//i donno y i've written this condition...i've forgotten it... :/ sorry bud..
 	halt;
 else
 	alias PCB S5;

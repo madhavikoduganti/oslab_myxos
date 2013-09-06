@@ -2,6 +2,7 @@ decl
 	integer i;
 enddecl
 integer main(){
+//odd takes 3 blocks of code
 	print("1");
 	print("3");
 	print("5");
@@ -49,7 +50,9 @@ integer main(){
 	print("5");
 	print("7");
 	print("9");
-	
+	print(Open("even.xsm"));
+	print(Open("even.xsm"));
+	print(Open("odd.xsm"));
 	print("11");
 	print("13");
 	print("15");

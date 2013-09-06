@@ -2,6 +2,7 @@ decl
 	integer i;
 enddecl
 integer main(){
+	print("strtin even");
 	print("2");
 	print("4");
 	print("6");
@@ -15,6 +16,9 @@ integer main(){
 	print("22");
 	print("24");
 	print("26");
-//	print(Exec("odd.xsm"));
+//	print(Open("even.xsm"));
+//	print(Open("even.xsm"));
+
+	print(Exec("odd.xsm"));
 	return 0;
 }

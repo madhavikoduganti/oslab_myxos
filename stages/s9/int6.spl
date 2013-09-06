@@ -9,13 +9,14 @@ return_add = ([PTBR + 2 * ((SP -2)/ 512)] * 512) + ((SP -2)% 512);
 arg1 = [([PTBR + 2 * ((SP -3)/ 512)] * 512) + ((SP -3)% 512)];
 							// Getting arguments from stack and put it in registers
 
-breakpoint;
-//--------exec begins here-----------
+//breakpoint;
+//------------------------------------------------exec begins here------------------------------------------------
 if(callno == 9) then
 	alias i S3;
 	alias j S4;
 	alias k S5;
 	alias basic_block S6;
+	alias PTBR_process S12;
 	alias l S7;
 	alias m S8;
 	i = 0;
@@ -29,24 +30,28 @@ if(callno == 9) then
 	else					//doin wt all needed if file is there
 		basic_block = [FAT + i*8 + 2];	//i now has the index of file in fat
 		load(1,basic_block);			//loading basic block to scratch pad
-
-		if([FAT + i*8 + 1] > 1536) then		//if the new process has got more than 3 valid pages,
+		j = [FAT + i*8 + 1]/512;	//now j contains the number of  valid pages of new process which is <= 3
+//		print("size ofnw prog");
+//		print(j);
+//		breakpoint;
+		if(j>3) then		//if the new process has got more than 3 valid pages,
 			[return_add] = -1;	//returning with failure
 			ireturn;
-		else			//now j contains the number of  valid pages of new process which is <= 3
+		else			
 			i = 0; k = 0;
 			while(i<3) do	//coounting the number of valid pages of current process, stack is always a valid page
 				if([PTBR + i*2 + 0] != -1) then	
 					 k = k + 1;					
-				endif;
+				endif;               
 				i = i + 1;
 			endwhile;	//now k contains the number of valid pages of curr. prog
-	
-	
+//			print("size old prog");
+//			print(k);
+//			breakpoint;	
 			if(j<=k) then	//if new process has lesser valid pages than current process
 				i=0;
 				l=0;
-				print("equal");
+//				print("less than,equal");
 				while((i<512) && (l<j)) do	
 					if([SCRATCHPAD + i] != -1) then
 						load([PTBR + l*0 + 0], [SCRATCHPAD + i]);
@@ -66,10 +71,9 @@ if(callno == 9) then
 				endif;
 			endif;
 	
-	
+//			breakpoint;
 			
-			if(j>k) then
-//-----------			------------------
+			if(j>k) then	//if new process has more pages than old one
 				i = 0;
 				l = 0;
 				while((i<3) && (l<j)) do
@@ -83,7 +87,7 @@ if(callno == 9) then
 								m = m + 1;
 							endwhile;
 							if(m>=64) then
-								breakpoint;							
+//								breakpoint;							
 								[return_add] = -1;
 								ireturn;
 							endif;
@@ -100,11 +104,11 @@ if(callno == 9) then
 				endwhile;
 			endif;
 				breakpoint;
-				//closing all the files
+				//------------------closing all the files-----------------
 				alias pid S6;
 				alias file_process S7;
-				file_process = READY_LIST + pid*32 + 15;
 				pid = (PTBR-1024)/8;
+				file_process = READY_LIST + pid*32 + 15;
 				i = 0;
 				while(i<8) do
 					if([file_process + i*2] != -1) then
@@ -112,15 +116,20 @@ if(callno == 9) then
 						if([FILE_TABLE + [file_process + i*2]*2 + 1] == 0) then
 							[FILE_TABLE + [file_process + i*2]*2 + 0] = -1;
 						endif;
+						[file_process + i*2] = -1;//invalidating SWOFT entry
+						[file_process + i*2 + 1] = -1; //basically not needed
+									//invalidating LSEEK
 					endif;
 					i = i + 1;
 				endwhile;
+				//--------------------all files closed-----------------------
 				SP = 3*512; //setting SP to 3*512, ie the base of stack
 				[([PTBR+2*((SP)/ 512)]*512)+((SP)%512)] = 0;//setting IP to 0.. IP shud be droppped into the top of stack
 				[return_add] = 0;//this is not needed.. but just wrote it... for just incase..
 //			endif;		
+				breakpoint;
 		endif;
 	endif;
 endif;
-///--------exec ends here-------------
+///------------------------------------------exec ends here---------------------------------------------
 ireturn;
