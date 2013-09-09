@@ -1,14 +1,11 @@
  integer main()
-{
+{	integer x;
 	integer pid;
-	integer pid1;
-	integer status;
-	pid = Fork();
-	if(pid == -2) then
-		print(Exec("even.xsm"));
-	else
-		print("hi");
-		print(Exec("odd.xsm"));
-	endif;
+	integer wr;
+	string proc1;
+while(1==1) do
+	read(proc1);
+	print(Exec(proc1));
+endwhile;
 	return 0;
 }
