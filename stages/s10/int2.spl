@@ -1,0 +1,116 @@
+//print "in int 2 routine";
+alias callno S1;
+alias return_add S2;
+alias arg1 S3;
+alias i S4;
+alias j S5;
+alias fat_entry S0;
+alias file_table_entry S6;
+alias pcb_entry S8;
+alias currentPCB S7;
+
+callno = [([PTBR + 2 * ((SP -1)/ 512)] * 512) + ((SP -1)% 512)];
+return_add = ([PTBR + 2 * ((SP -2)/ 512)] * 512) + ((SP -2)% 512);
+arg1 = [([PTBR + 2 * ((SP -3)/ 512)] * 512) + ((SP -3)% 512)];
+
+//---------open system call-----------
+if(callno == 2) then
+	//checking the FAT for the file.. returning -1 if file not found..
+	i=0;
+	while(i<64) do
+		if([FAT + i*8] == arg1) then
+		//getting fat_entry---------
+			fat_entry = i;
+			j=0;
+			//getting file_table_entry------
+			while(j<64) do
+				if([FILE_TABLE + j*2 + 0] == fat_entry) then
+					file_table_entry = j;
+					break;
+				else
+					j = j+1;
+				endif;
+			endwhile;
+			if(j>=64) then 
+				j=0;
+				while(([FILE_TABLE + j*2 + 0] != -1) && j<64) do
+					j = j+1;
+				endwhile;
+				if(j != 64) then
+					//
+					file_table_entry = j;
+
+					else
+					[return_add] = -1;
+					ireturn;
+				endif;
+				
+			endif;
+			//got file_table_entry----------
+			//getting per process file table entry
+			currentPCB = READY_LIST + 32 *((PTBR - 1024) / 8);
+			j=0;
+			while(([currentPCB + 15 + 2*j] != -1) && (j<8)) do
+				j = j+1;
+			endwhile;
+			if(j != 8) then	
+				pcb_entry = j; //got pcb_entry
+				[FILE_TABLE + 2*file_table_entry + 0] = fat_entry;
+
+				[FILE_TABLE + 2*file_table_entry + 1] = [FILE_TABLE + 2*file_table_entry + 1]  + 1;
+
+				[currentPCB + 15 + pcb_entry*2 + 0] = file_table_entry;
+				[currentPCB + 15 + pcb_entry*2 + 1] = 0;
+				[return_add] = pcb_entry;
+//				breakpoint;
+				ireturn;	
+				
+			else
+				[return_add] = -1;
+				ireturn;
+			endif;
+				
+		break;		
+		else
+			[return_add] = -1;
+		endif;
+		
+		i = i+1;
+	endwhile;
+	
+endif;
+//breakpoint;
+//------done with open system call-----------
+
+
+//---------------close system call-------------------
+if(callno == 3) then
+	if((0 <= arg1) && (7 >= arg1)) then
+		currentPCB = READY_LIST + 32 *((PTBR - 1024) / 8);
+		pcb_entry = arg1;
+		if([currentPCB + 15 + 2*arg1 + 0] == -1)	then
+			[return_add] = -1;
+			ireturn;
+		else
+			file_table_entry = [currentPCB + 15 + 2*arg1 + 0] ;
+			[FILE_TABLE + file_table_entry*2 + 1] = [FILE_TABLE + file_table_entry*2 + 1]  - 1;
+			if([FILE_TABLE + file_table_entry*2 + 1] == 0) then
+				[FILE_TABLE + file_table_entry*2 + 0] = -1;
+			endif;
+			
+		endif;
+		[currentPCB + 15 + 2*arg1 + 0] = -1;//setting file descriptor to invalid
+		[currentPCB + 15 + 2*arg1 + 1] = -1;//setting lseek to invalid
+		[return_add] = 0;
+	else
+		[return_add] = -1;
+//		ireturn;
+	endif;
+
+
+endif;
+//breakpoint;
+//-----------done with close system call----------------
+
+
+ireturn;

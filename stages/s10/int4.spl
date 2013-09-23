@@ -1,0 +1,82 @@
+alias callno S1;
+alias return_add S2;
+alias arg1 S0;
+alias arg2 S3;
+alias currentPCB S4;
+alias file_table_index S5;
+alias fat_index S6;
+alias basic_block S7;
+alias data_block S8;
+alias i S9;
+alias j S10;
+alias lseek S11;
+alias block_num S12;
+callno = [([PTBR + 2 * ((SP -1)/ 512)] * 512) + ((SP -1)% 512)];// Get system call no. from the stack and put it in a register
+return_add = ([PTBR + 2 * ((SP -2)/ 512)] * 512) + ((SP -2)% 512); //getting return address for  returning the value by the  system call
+arg2 = [([PTBR + 2 * ((SP -3)/ 512)] * 512) + ((SP -3)% 512)];// Getting arguments from stack and put it in registers.. this is LSEEK position
+arg1 = [([PTBR + 2 * ((SP -4)/ 512)] * 512) + ((SP -4)% 512)];// Getting arguments from stack and put it in registers.. this is file descriptor
+
+
+
+//------------------write system call-----------------
+if(callno == 5) then 					//call number is 5 for write sytem call.. if callnumber is 5,
+	if((arg1 < 0) || (arg1 > 7)) then			//if file descriptor is invalid..
+		[return_add] = -1;			//returning with failure
+		ireturn;
+	else						//if file descriptor is valid
+		currentPCB = READY_LIST + 32 *((PTBR - 1024) / 8);//pcb value
+		file_table_index = [currentPCB + 15 + arg1*2 + 0];//index to  system wide file table entry in pcb now
+		if(file_table_index == -1) then
+			[return_add] = -1;
+			ireturn;
+		endif;
+		lseek = [currentPCB + 15 + arg1*2 + 1];	//getting lseek value
+		if([FILE_TABLE + 2*file_table_index + 0] == -1) then //system wide open file table entry  if is -1
+			[return_add] = -1;		//returning with failure
+			ireturn;
+		else					//if not -1
+			fat_index = [FILE_TABLE + 2*file_table_index + 0];//index to the fat entry of the file
+			basic_block = [FAT + fat_index*8 + 2]; //getting basic block wid fat_index
+			load(1, basic_block); 		//loading basic block to scratchpad
+			i = lseek/512;			//getting blockindex in basic block using lseek position 
+			j = lseek%512;			//getting address of the word 
+							//to where content is to be written in the block
+
+			if([SCRATCHPAD + i] != -1) then ///if therez a block already available at index given by lseek(i.e, i)
+				block_num = [SCRATCHPAD + i];//getting that block number from basic block
+				store(1, basic_block);
+			else 				//if no block is der to write, fetching a new one
+				i=0; 			//using a loop iterator i temporarily
+				while((i<448) && ([DISK_LIST + i] != 0)) do
+					i = i+1;
+				endwhile;
+				if(i >= 448) then 	//if no new free block to write
+					[return_add] = -1;//returning with failure
+					ireturn;
+				endif;
+				block_num = i; 		//if found, bolcknumber is stored
+				i = lseek/512; 		//storing back the index of the block given by lseek
+				[SCRATCHPAD + i] = block_num;
+						 	//writing the newblock number to the basic block
+				store(1, basic_block); 	//storing back basic block
+				[DISK_LIST + block_num] = 1;
+						 	//setting the new block found to used up in disk free list
+				[FAT + fat_index*8 + 1] = [FAT + fat_index*8 + 1] + 512; 
+							//increasing the size of file using 
+							//fat_index by 512, since a new block was added
+			endif;				//writing to the block
+							
+			load(1, block_num);		//now, loading the block
+			[SCRATCHPAD + j] = arg2;	//writing contents into the block.. arg2 is the content to be written
+			store(1, block_num);		//storing back the written block
+			[currentPCB + 15 + arg1*2 + 1] = [currentPCB + 15 + arg1*2 + 1] + 1;
+							//incrementing lseek value after writing to the file
+			store(5,19);			//storing FAT  from memory to disk
+			store(6,20); 			//storing Disk free list from memory to disk
+			[return_add] = 0;		//return value 0.. success
+		endif;
+	endif;
+endif;
+breakpoint;
+//--------------done with write system call----------------
+ireturn;

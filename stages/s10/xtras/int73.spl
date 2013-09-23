@@ -1,0 +1,118 @@
+alias callno S15;
+alias return_add S14;
+callno = [([PTBR + 2 * ((SP -1)/ 512)] * 512) + ((SP -1)% 512)];
+							// Get system call no. from the stack and put it in a register
+return_add = ([PTBR + 2 * ((SP -2)/ 512)] * 512) + ((SP -2)% 512); 
+							//getting return address for  returning the value by the  system call
+if(callno == 14) then
+	alias i S0 ;
+	i=0;
+	while(i<32) do
+		if([READY_LIST + i*32 + 1] > 100) then
+			[READY_LIST + i*32 + 1] = 1;
+		endif;
+		i = i + 1;
+	endwhile;
+	if(i>=32) then
+	[return_add] = 0;
+	else 
+	[return_add] = -1;
+	endif;
+ireturn;
+endif;
+alias currentPID S0;
+currentPID = (PTBR - 1024) / 8;
+alias currentPCB S1;
+currentPCB = READY_LIST + 32 * currentPID;
+alias pid S2;
+alias pcb S4;
+alias i S3;
+alias j S8;
+//if((callno==13) || (callno==10)) then
+
+if(callno==13) then
+	alias waitingpid S13;
+	waitingpid = [([PTBR + 2 * ((SP -3)/ 512)] * 512) + ((SP -3)% 512)];
+							// Get argument from the stack
+	if( (waitingpid == (PTBR-1024)/8) || ([READY_LIST + waitingpid*32 + 1] == 0)  ) then
+		[return_add] = -1;
+		ireturn;
+		else
+		[READY_LIST + ((PTBR - 1024) / 8)*32 + 1] = 100 + waitingpid;
+		[return_add] = 0;
+	endif;
+endif;
+	//------------------------------------------------exit begins here------------------------------------------------
+if(callno != 13) then
+	[ currentPCB + 1 ] = 0; 		// Set STATE to 0... means process is dead or ended
+	i=0;
+	while(i<8) do			//clearing off of the file descriptors from pcb for the ended process
+		if([currentPCB + 15 + i*2 + 0] != -1) then
+			[FILE_TABLE + [currentPCB + 15 + i*2 + 0]*2 + 1] = [FILE_TABLE + [currentPCB + 15 + i*2 + 0]*2 + 1] - 1;
+			if([FILE_TABLE + [currentPCB + 15 + i*2 + 0]*2 + 1] == 0) then
+				[FILE_TABLE + [currentPCB + 15 + i*2 + 0]*2 + 0] = -1;
+			endif;
+		endif;
+		[currentPCB + 15 + i*2 + 0] = -1;//clearing off file table index from each file descriptor
+		[currentPCB + 15 + i*2 + 1] = -1;//clearing off lseek value from each file descriptor
+		i = i + 1;
+	endwhile;
+	i=0;
+	while(i<4) do			//clearing off of per process file table of ended process
+		[PTBR + i*2 + 0] = -1;	//setting the page as invalid
+		[PTBR + i*2 + 1] = "00";	//dereferencing the page
+		i = i + 1;
+	endwhile;
+	i=0;
+//	print("im here");
+	while(i<32) do
+		if([READY_LIST + i*32 + 1] == 100+currentPID) then
+			[READY_LIST + i*32 + 1] = 1;
+		endif;
+		i = i + 1;		
+	endwhile;
+endif;
+//-----------------exit's scheduling should begin now-----------------------------------------------------------------------
+i=0;
+while((i<32) && ([READY_LIST + i*32 + 1] == 0)) do		//checking the number of ended processes
+	i=i+1;
+endwhile;
+if(i > 31) then		//if all processes have ended
+	halt;		//then halting the machine
+endif;
+pid = currentPID + 1;
+while([READY_LIST + 32 * pid + 1] != 1) do
+	pid = pid + 1;
+	if(pid > 31) then	//see, previously u've set pid as the pid of 
+				//the next process by incrementing the ended process's pid-ROUND ROBIN WAY
+		pid = 0;	//incase the ended process's pid is 31, go check for 0th pid process-ROUND ROBIN 
+	endif;
+//	print(pid);
+endwhile;
+pcb = READY_LIST + 32 * pid;
+//-----------------------------
+
+//	//control comes here if it finds any process in ready state with pid variable holding the pid of that process
+//	if(pid == currentPID+1) then 	//i donno y i've written this condition...i've forgotten it... :/ sorry bud..
+//		halt;
+	alias PCB S5;
+	PCB = pcb;
+	[PCB + 1] = 2;
+	BP = [PCB + 2];
+	SP = [PCB + 3];
+	PTBR = [PCB + 5];
+	PTLR = [PCB + 6];
+	R0 = [PCB + 7];
+	R1 = [PCB + 8];
+	R2 = [PCB + 9];
+	R3 = [PCB + 10];
+	R4 = [PCB + 11];
+	R5 = [PCB + 12];
+	R6 = [PCB + 13];
+	R7 = [PCB + 14];
+	SP = SP + 1; 
+	alias newphysicalSP S2; 
+	newphysicalSP = ([PTBR + 2 * (SP / 512)] * 512) + (SP % 512); 
+	[ newphysicalSP ] = [ PCB + 4 ]; // Stores IP field value of PCB on the stack 
+//----------------exit ends here----------------
+ireturn;
