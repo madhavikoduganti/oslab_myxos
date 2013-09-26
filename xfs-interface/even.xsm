@@ -5,6 +5,8 @@ PUSH R0
 JMP 00010
 PUSH BP
 MOV BP,SP
+MOV R0, "strtin even"
+OUT R0
 MOV R0, "2"
 OUT R0
 MOV R0, "4"

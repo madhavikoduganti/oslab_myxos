@@ -23,7 +23,6 @@ if(callno == 9) then
 	while((i<64) && ([FAT + i*8 + 0] != arg1)) do //checking if the file is present already
 		i = i + 1;
 	endwhile;
-	
 	if(i>=64) then
 		[return_add] = -1;		//returning with -1 incase file is not there
 		ireturn;
@@ -31,22 +30,18 @@ if(callno == 9) then
 		basic_block = [FAT + i*8 + 2];	//i now has the index of file in fat
 		load(1,basic_block);			//loading basic block to scratch pad
 		j = [FAT + i*8 + 1]/512;	//now j contains the number of  valid pages of new process which is <= 3
-//		print("size ofnw prog");
-//		print(j);
 //		breakpoint;
 		if(j>3) then		//if the new process has got more than 3 valid pages,
 			[return_add] = -1;	//returning with failure
 			ireturn;
 		else			
 			i = 0; k = 0;
-			while(i<3) do	//coounting the number of valid pages of current process, stack is always a valid page
+			while(i<3) do	//counting the number of valid pages of current process, stack is always a valid page
 				if([PTBR + i*2 + 0] != -1) then	
 					 k = k + 1;					
 				endif;               
 				i = i + 1;
 			endwhile;	//now k contains the number of valid pages of curr. prog
-//			print("size old prog");
-//			print(k);
 //			breakpoint;	
 			if(j<=k) then	//if new process has lesser valid pages than current process
 				i=0;
@@ -70,10 +65,8 @@ if(callno == 9) then
 					endwhile;
 				endif;
 			endif;
-	
 //			breakpoint;
-			
-			if(j>k) then	//if new process has more pages than old one
+\			if(j>k) then	//if new process has more pages than old one
 				i = 0;
 				l = 0;
 				while((i<3) && (l<j)) do

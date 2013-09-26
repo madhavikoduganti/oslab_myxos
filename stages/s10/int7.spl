@@ -29,9 +29,6 @@ if(callno == 14) then
 	endwhile;
 ireturn;
 endif;
-
-//if((callno==13) || (callno==10)) then
-
 if(callno==13) then
 	alias waitingpid S13;
 	waitingpid = [([PTBR + 2 * ((SP -3)/ 512)] * 512) + ((SP -3)% 512)];
@@ -62,7 +59,7 @@ if(callno==13) then
 
 endif;
 	//------------------------------------------------exit begins here------------------------------------------------
-if(callno != 13) then
+if((callno != 13) && (callno != 14)) then
 	[ currentPCB + 1 ] = 0; 		// Set STATE to 0... means process is dead or ended
 	i=0;
 	while(i<8) do			//clearing off of the file descriptors from pcb for the ended process
@@ -77,11 +74,20 @@ if(callno != 13) then
 		i = i + 1;
 	endwhile;
 	i=0;
+//-------here strts new proc-----------------------
 	while(i<4) do			//clearing off of per process file table of ended process
-		[PTBR + i*2 + 0] = -1;	//setting the page as invalid
-		[PTBR + i*2 + 1] = "00";	//dereferencing the page
+		if( ([PTBR + i*2 + 1] == "00") || ([PTBR + i*2 + 1] == "10") )  then
+			if([PTBR + i*2 + 0] >= 448) then //means swap block
+				[DISK_LIST + [PTBR + i*2 + 0]] = [DISK_LIST + [PTBR + i*2 + 0]] - 1;
+			endif;
+		else 
+			if( ([PTBR + i*2 + 1] == "01" ) || ([PTBR + i*2 + 1] == "11") ) then //means physical page
+				[MEM_LIST + [PTBR + i*2 + 0]] = [MEM_LIST + [PTBR + i*2 + 0]] - 1;
+			endif;
+		endif;
 		i = i + 1;
 	endwhile;
+//-------here ends new proc------------------
 	i=0;
 	while(i<32) do
 		if([READY_LIST + i*32 + 1] == 100+currentPID) then
@@ -128,6 +134,4 @@ endif;
 		newphysicalSP = ([PTBR + 2 * (SP / 512)] * 512) + (SP % 512); 
 		[ newphysicalSP ] = [ PCB + 4 ]; // Stores IP field value of PCB on the stack 
 	//----------------exit, call 10, wait's scheduling end here----------------
-
-
 ireturn;

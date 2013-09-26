@@ -77,6 +77,6 @@ if(callno == 5) then 					//call number is 5 for write sytem call.. if callnumbe
 		endif;
 	endif;
 endif;
-breakpoint;
+//breakpoint;
 //--------------done with write system call----------------
 ireturn;

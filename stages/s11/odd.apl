@@ -2,20 +2,23 @@ decl
 	integer i;
 enddecl
 integer main(){
-	print("1");
-	print("3");
-	print("5");
-	print("7");
-	print("9");
+//	print("hi1");
+//	print("hi3");
+//	print("hi5");
+//	print("hi7");
+//	print("hi9");
 	
-	print("11");
-	print("13");
-	print("15");
-	print("17");
-	print("19");
-	print("21");
-	print("23");
-	print("25");
-
+//	print("hi11");
+//	print("hi13");
+//	print("hi15");
+//	print("hi17");
+//	print("hi19");
+//	print("hi21");
+//	print("hi23");
+//	print("hi25");
+	i=0;
+	while(i<222) do
+	i = i + 1;
+	endwhile;
 	return 0;
 }

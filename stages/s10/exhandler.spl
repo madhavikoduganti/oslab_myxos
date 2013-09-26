@@ -1,3 +1,101 @@
-print "in handler";
+		print"abt to";
+alias Cause S0;
+alias vpn S1;
+alias Ip_addr S2;
+alias i S3;
+alias j S4;
+alias gotpage S5;
+alias victim S6;
+alias victim_pt S7;
+alias apn S8;
+//print "in handler";
+Cause = EFR % 10;		// Gets value of cause field (size 1 char)
+vpn = (EFR / 10) % 100;    // Gets value of BadVAddr 
+Ip_addr = (EFR/1000);		//Gets value of IP at the point of exception
+//	print(Cause);
+if(Cause != 0) then 
+//	print(vpn);
+//	print("cnot0");
+	if(Cause == 1) then
+		print "Illegal Instruction";
+	endif;
+	if(Cause == 2) then
+		print "Illegal memory access";
+	endif;
+	if(Cause == 3) then
+		print "Arithmetic Exception";
+	endif;
+	if(Cause == 4) then
+		print "Illegal Operands";
+	endif;
+	inline "JMP 11776";
+endif;
+if(Cause == 0) then
+//	print(vpn);
+//	print("c0");
+	if([PTBR + vpn*2 + 0] == -1) then
+		inline "JMP 11776";
+	else
+//		print("in else");
+		//getting a free page from mem by traversing mem free list
+		i=0;
+		while(i<64) do 
+			if([MEM_LIST + i] == 0) then
+				break;
+			endif;
+		i = i + 1;
+		endwhile;
+		if(i<64) then		//if free page is found
+			victim = i;
+			[MEM_LIST + victim] = [MEM_LIST + victim] + 1;
+		else			//if free page is not found
+					//SECOND CHANCE ALGORITHM
+			i=-1;
+			while(i<32*4) do//getting the victim page
+				i = i + 1;
+				if((i+1)%4==0) then
+					continue;
+				else
+					if(([PAGE_TABLE + i*2 + 1] == "11") || ([PAGE_TABLE + i*2 + 1] == "10") ) then
+						[PAGE_TABLE + i*2 + 1] = "01" ;
+					else
+						victim_pt = i;
+						victim = [PAGE_TABLE + victim_pt*2 + 0];
+					endif;
+				endif;
+			endwhile;//got victim page
+			i=448;
+			while(i<512) do	
+				if([DISK_LIST + i] == 0) then 
+					store(victim, i);
+					[DISK_LIST + i] = [DISK_LIST + i] + 1;
+					[PAGE_TABLE + victim_pt*2 + 0] = i;
+					[PAGE_TABLE + victim_pt*2 + 1] = "00";
+					break;
+				endif;
+				i = i + 1;
+			endwhile;
+			if(i>=512) then 
+			inline "JMP 11776";
+			endif;
+		endif;
+		apn = [PTBR + vpn*2 + 0 ];
+		if(20<apn<448) then
+			load(victim, apn);
+		endif;
+		if(447<apn<512) then
+			load(victim, apn);
+			//i am here
+//			load(1, 20);
+			[DISK_LIST + apn] = [DISK_LIST + apn] - 1;
+//			store(1, 20);
+		endif;
+		[PTBR + vpn*2 + 0 ] = victim;
+		[PTBR + vpn*2 + 1 ] = "11";
+		SP = SP + 1;
+		[([PTBR + 2 * ((SP)/ 512)] * 512) + ((SP)% 512)] = Ip_addr;
+		ireturn;
+	endif;
+endif;
 breakpoint;
 halt;

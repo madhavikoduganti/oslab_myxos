@@ -8,7 +8,7 @@ $spl/spl --int=6 $s1/int6.spl
 $spl/spl --int=5 $s1/int5.spl
 $spl/spl --int=7 $s1/int7.spl
 $spl/spl --exhandler $s1/exhandler.spl
-$apl/apl $s1/init.apl
+$apl/apl $s1/initg.apl
 $apl/apl $s1/odd.apl
 $apl/apl $s1/even.apl
 
@@ -19,7 +19,8 @@ $apl/apl $s1/even.apl
 
 
 
-load --init $s1/init.xsm
+
+load --init $s1/initg.xsm
 load --os $s1/os_startup.xsm
 load --int=1 $s1/int1.xsm
 load --int=2 $s1/int2.xsm

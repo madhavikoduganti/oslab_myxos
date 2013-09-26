@@ -12,7 +12,7 @@ alias PT_mom S10;
 alias mom_block S11;
 alias child_block S12;
 //print [([PTBR + 2 * ((SP)/ 512)] * 512) + ((SP)% 512)];
-breakpoint;
+//breakpoint;
 callno = [([PTBR + 2 * ((SP-1)/ 512)] * 512) + ((SP-1)% 512)];
 							// Get system call no. from the stack and put it in a register
 return_add = ([PTBR + 2 * ((SP-2)/ 512)] * 512) + ((SP-2)% 512); 
@@ -26,7 +26,7 @@ if(callno == 8)	then
 //	print "pcb index";
 //	print i;
 	if(i>=32) then 		
-//		print "failure1"	;						//if no pcb entry is freely available
+		print "failure1"	;						//if no pcb entry is freely available
 		[return_add] = -1;						//returniing with failure
 	else									//if there is free pcb entry for the child process
 		pcb_index = i;							//pcb_index of child
@@ -53,16 +53,16 @@ if(callno == 8)	then
 			i = i + 1;
 		endwhile;
 		if(k<j) then
-//			print "failure";
+			print "failure";
 			[return_add] = -1;					//returning with failure if enough memory pages are not 
 										//available
 		else		
-								//if enough pages are available
+										//if enough pages are available
 //			print "in else";
 			i=0;
 			PT_mom = PTBR;
 			PT_child = PAGE_TABLE + pcb_index*8;
-			breakpoint;
+//			breakpoint;
 			while(i<4) do
 				if([PT_mom + i*2 + 0] != -1) then
 					k = 0;
@@ -115,9 +115,10 @@ if(callno == 8)	then
 			[PCB_child + 31] = (PTBR - 1024)/8; //storing parent pid to 31st bit of pcb of child
 			[return_add] = pcb_index;
 			[([PT_child + 2 * ((SP-2)/ 512)] * 512) + ((SP-2)% 512)] = -2; 
+			breakpoint;
 		endif;
 	endif;
 endif;
-breakpoint;
+//breakpoint;
 //----------done wid FORK-------------------------------
 ireturn;

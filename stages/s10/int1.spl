@@ -99,7 +99,7 @@ if(callno == 4) then
 	endwhile;
 	if(i >= 64) then 				//if no file found, returning wid -1
 		[return_add] = -1;
-		breakpoint;
+//		breakpoint;
 		ireturn;
 	else						//if file is found
 		fat_entry = i; 				//getting the fat entry of the file
@@ -113,7 +113,7 @@ if(callno == 4) then
 		
 		if(i < 64) then 				//means file is open
 			[return_add] = -1; 		//hence returning wid failure
-			breakpoint;
+//			breakpoint;
 			ireturn;		
 		else					//if file is not open
 							//writing the code
@@ -150,11 +150,11 @@ if(callno == 4) then
 			store(5, 19);				//storing back FAT from memory to disk
 			store(6, 20);				//storing back disk free list from memory to disk
 			[return_add] = 0;			//giving return value as 0 
-			breakpoint;
+//			breakpoint;
 			ireturn;
 		endif;
 	endif;
 endif;
-breakpoint;
+//breakpoint;
 //-----done wid system call for delete----------------
 ireturn;	//returning to user mode

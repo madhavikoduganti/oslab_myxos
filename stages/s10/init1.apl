@@ -1,34 +1,22 @@
- integer main()
-{	integer x;
-	integer pid;
-	integer wr;
-	string proc1;
-	while(1==1) do
-		read(proc1);
-		if(proc1 == "end") then
+integer main(){
+	integer b,i,c,d;
+	string a;
+//	print(Getpid());
+
+	while(1==1)do
+		read(a);
+		if(a == "end") then 		
 			break;
 		else
-			pid = Fork();
-			if(pid == -2) then	
-				pid1 = Fork();
-				if(pid1 == -2) then
-					print("i am gd");
-					print(Getppid());
-					print(Getpid());
-					print(Signal());
-					print(Exec("even.xsm"));					
+				b=Fork();
+				if(b==-2)then
+					print(Exec(a));
 				else
-					print((pid));
+					print(Wait(b));
 				endif;
-					
-				print(Exec(proc1));
-			else
-				print(Wait(pid));
-				print(Exec("hi.xsm"));
-			endif;
-		endif;	
 		
+		endif;
 	endwhile;
-	print("Thank You!");
+	print("Thnk u bye!");
 	return 0;
 }

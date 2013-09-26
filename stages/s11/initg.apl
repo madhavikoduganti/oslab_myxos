@@ -1,15 +1,17 @@
 integer main(){
 	integer a,b,i,c,d;
 	a=0;
-	print(Getpid());
-	while(a<45)do
+	while(a<40)do
+		a=a+1;
 		b=Fork();
 		if(b==-2)then
 			print(Getpid());
+		//	d=Exec("odd.xsm");
 		else
-			print(Wait(b));
+//		c=Wait(b);
+		Exit();
+
 		endif;
-		a = a + 1;
 	endwhile;
 	return 0;
 }
